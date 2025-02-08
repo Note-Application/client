@@ -7,7 +7,7 @@ import { Box } from "@mui/material";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const API_BASE_URL = "http://localhost:7000";
+const API_BASE_URL = "https://noteapp-wnzf.onrender.com";
 
 function App() {
   const [user, setUser] = useState(null);
