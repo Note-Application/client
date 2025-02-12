@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import Editor from "./components/Editor";
 import Sidebar from "./components/SideBar";
@@ -6,6 +6,7 @@ import TopBar from "./components/TopBar";
 import { Box } from "@mui/material";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { debounce } from "lodash";
 
 const API_BASE_URL = "https://noteapp-wnzf.onrender.com";
 
@@ -86,21 +87,27 @@ function App() {
     }
   };
 
+  const debouncedSave = useCallback(
+    debounce(async (updatedNote) => {
+      if (!user || !updatedNote) return;
+      try {
+        await axios.put(`${API_BASE_URL}/notes/${updatedNote.id}`, updatedNote);
+      } catch (error) {
+        console.error("Error saving note:", error);
+      }
+    }, 500), // 1 second debounce
+    [user]
+  );
+
   // Save or Update Note
   const handleSaveNote = async (updatedNote) => {
-    if (!user || !updatedNote) return;
-
-    try {
-      await axios.put(`${API_BASE_URL}/notes/${updatedNote.id}`, updatedNote);
-      setNotes((prevNotes) =>
-        prevNotes.map((note) =>
-          note.id === updatedNote.id ? { ...updatedNote } : note
-        )
-      );
-      setSelectedNote(updatedNote);
-    } catch (error) {
-      console.error("Error saving note:", error);
-    }
+    setSelectedNote(updatedNote);
+    setNotes((prevNotes) =>
+      prevNotes.map((note) =>
+        note.id === updatedNote.id ? { ...updatedNote } : note
+      )
+    );
+    debouncedSave(updatedNote);
   };
 
   // Delete Note
@@ -119,12 +126,14 @@ function App() {
     <Box sx={{ display: "flex", height: "100vh", backgroundColor: "#f5f5f5" }}>
       <Sidebar notes={notes} selectedNote={selectedNote} onNoteClick={setSelectedNote} onAddNote={handleAddNote} onDeleteNote={handleDeleteNote} />
       <Box sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
-        <TopBar user={user} setUser={setUser} onLogin={handleLogin} />
+        <TopBar user={user} setUser={setUser} setNotes={setNotes} onLogin={handleLogin} />
+        
         {selectedNote ? (
           <Editor selectedNote={selectedNote} onContentChange={handleSaveNote} />
         ) : (
           <Box sx={{ textAlign: "center", mt: 10 }}>No notes available. Add a new note!</Box>
         )}
+
       </Box>
     </Box>
   );

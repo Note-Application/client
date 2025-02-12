@@ -8,7 +8,7 @@ import axios from "axios";
 const CLIENT_ID = "437083640575-eqgncvtn6ham29h67rskg8ibaku1jva8.apps.googleusercontent.com"; // Replace with your actual Google Client ID
 const API_BASE_URL = "https://noteapp-wnzf.onrender.com"; // Backend API URL
 
-const TopBar = ({ user, setUser }) => {
+const TopBar = ({ user, setUser, setNotes }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -70,6 +70,7 @@ const TopBar = ({ user, setUser }) => {
   // Logout Functionality
   const handleLogout = () => {
     setUser(null); // Clear user state
+    setNotes([]);
     localStorage.removeItem("userEmail"); // Remove email from local storage
     setAnchorEl(null);
   };
@@ -87,11 +88,8 @@ const TopBar = ({ user, setUser }) => {
       <AppBar position="sticky" sx={{ mb: 2, backgroundColor: "#1976d2", borderRadius: 2, px: 2 }}>
         <Toolbar sx={{ justifyContent: "space-between", alignItems: "center" }}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton sx={{ color: "white", mr: 1 }}>
-              <MenuIcon />
-            </IconButton>
             <Typography variant="h6" sx={{ fontWeight: "bold", letterSpacing: 1 }}>
-              Notes App
+              Note App
             </Typography>
           </Box>
 
