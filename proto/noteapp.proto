@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "proto/generated";
+
+// User Service
+service UserService {
+  rpc CreateUser (CreateUserRequest) returns (UserResponse);
+  rpc GetUserByEmail (GetUserByEmailRequest) returns (UserResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+}
+
+// Note Service
+service NoteService {
+  rpc CreateNote (CreateNoteRequest) returns (NoteResponse);
+  rpc GetNoteByID (GetNoteByIDRequest) returns (NoteResponse);
+  rpc GetNotesByUserID (GetNotesByUserIDRequest) returns (GetNotesByUserIDResponse);
+  rpc UpdateNote (UpdateNoteRequest) returns (NoteResponse);
+  rpc DeleteNote (DeleteNoteRequest) returns (DeleteNoteResponse);
+}
+
+// User Messages
+message User {
+  int32 id = 1 [json_name = "id"];
+  string email = 2 [json_name = "email"];
+  string name = 3 [json_name = "name"];
+  string profile_pic = 4 [json_name = "profile_pic"];
+}
+
+message CreateUserRequest {
+  string email = 1 [json_name = "email"];
+  string name = 2 [json_name = "name"];
+  string profile_pic = 3 [json_name = "profile_pic"];
+}
+
+message GetUserByEmailRequest {
+  string email = 1 [json_name = "email"];
+}
+
+message UpdateUserRequest {
+  string email = 1 [json_name = "email"];
+  string name = 2 [json_name = "name"];
+  string profile_pic = 3 [json_name = "profile_pic"];
+}
+
+message DeleteUserRequest {
+  string email = 1 [json_name = "email"];
+}
+
+message DeleteUserResponse {
+  string message = 1 [json_name = "message"];
+}
+
+message UserResponse {
+  User user = 1 [json_name = "user"];
+}
+
+// Note Messages
+message Note {
+  int32 id = 1 [json_name = "id"];
+  int32 user_id = 2 [json_name = "user_id"];
+  string title = 3 [json_name = "title"];
+  string content = 4 [json_name = "content"];
+}
+
+message CreateNoteRequest {
+  int32 user_id = 1 [json_name = "user_id"];
+  string title = 2 [json_name = "title"];
+  string content = 3 [json_name = "content"];
+}
+
+message GetNoteByIDRequest {
+  int32 id = 1 [json_name = "id"];
+}
+
+message GetNotesByUserIDRequest {
+  int32 user_id = 1 [json_name = "user_id"];
+}
+
+message GetNotesByUserIDResponse {
+  repeated Note notes = 1 [json_name = "notes"];
+}
+
+message UpdateNoteRequest {
+  int32 id = 1 [json_name = "id"];
+  string title = 2 [json_name = "title"];
+  string content = 3 [json_name = "content"];
+}
+
+message DeleteNoteRequest {
+  int32 id = 1 [json_name = "id"];
+}
+
+message DeleteNoteResponse {
+  string message = 1 [json_name = "message"];
+}
+
+message NoteResponse {
+  Note note = 1 [json_name = "note"];
+}
