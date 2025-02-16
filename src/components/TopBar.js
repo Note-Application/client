@@ -1,34 +1,56 @@
 import React, { useState, useEffect } from "react";
-import { AppBar, Toolbar, Typography, Avatar, Box, IconButton, Menu, MenuItem, Tooltip, Button } from "@mui/material";
-import { Menu as MenuIcon } from "@mui/icons-material";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Avatar,
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Tooltip,
+} from "@mui/material";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import axios from "axios";
+import { GetUserByEmailRequest, CreateUserRequest } from "../generated/noteapp_pb"; // Import gRPC messages
+import { UserServiceClient } from "../generated/noteapp_grpc_web_pb";
 
-const CLIENT_ID = "437083640575-eqgncvtn6ham29h67rskg8ibaku1jva8.apps.googleusercontent.com"; // Replace with your actual Google Client ID
-const API_BASE_URL = "https://noteapp-wnzf.onrender.com"; // Backend API URL
+const CLIENT_ID = "437083640575-eqgncvtn6ham29h67rskg8ibaku1jva8.apps.googleusercontent.com";
+const GRPC_SERVER_URL = "http://localhost:9000"; // Envoy proxy for gRPC-web
+
+const usersClient = new UserServiceClient(GRPC_SERVER_URL); // gRPC client instance
 
 const TopBar = ({ user, setUser, setNotes }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
   useEffect(() => {
-    // Try to get the logged-in user's email from local storage
     const savedEmail = localStorage.getItem("userEmail");
     if (savedEmail) {
       fetchUserByEmail(savedEmail);
     }
   }, []);
 
-  // Fetch user from backend if email exists
+  // Fetch user using gRPC
   const fetchUserByEmail = async (email) => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/users/${email}`);
-      setUser(response.data);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      localStorage.removeItem("userEmail"); // Remove invalid email from local storage
-    }
+    const request = new GetUserByEmailRequest();
+    request.setEmail(email);
+
+    usersClient.getUserByEmail(request, {}, (err, response) => {
+      if (err) {
+        console.error("Error fetching user:", err);
+        localStorage.removeItem("userEmail");
+        return;
+      }
+
+      const userResponse = response.getUser();
+      setUser({
+        id: userResponse.getId(),
+        email: userResponse.getEmail(),
+        name: userResponse.getName(),
+        profile_pic: userResponse.getProfilePic(),
+      });
+    });
   };
 
   // Handle Google Login
@@ -42,26 +64,48 @@ const TopBar = ({ user, setUser, setNotes }) => {
         return;
       }
 
-      try {
-        // Check if user exists
-        const userResponse = await axios.get(`${API_BASE_URL}/users/${email}`);
-        setUser(userResponse.data);
-        localStorage.setItem("userEmail", email); // Store email for persistence
-      } catch (error) {
-        if (error.response && error.response.status === 404) {
-          // Create user if not found
-          const newUser = {
-            email,
-            name: decodedToken.name,
-            profile_pic: decodedToken.picture,
-          };
-          const createUserResponse = await axios.post(`${API_BASE_URL}/users`, newUser);
-          setUser(createUserResponse.data);
-          localStorage.setItem("userEmail", email);
-        } else {
-          console.error("Login error:", error);
+      const request = new GetUserByEmailRequest();
+      request.setEmail(email);
+
+      usersClient.getUserByEmail(request, {}, async (err, response) => {
+        if (err) {
+          if (err.code === 5) {
+            // User not found, create new user
+            const createUserRequest = new CreateUserRequest();
+            createUserRequest.setEmail(email);
+            createUserRequest.setName(decodedToken.name);
+            createUserRequest.setProfilePic(decodedToken.picture);
+
+            usersClient.createUser(createUserRequest, {}, (createErr, createRes) => {
+              if (createErr) {
+                console.error("Error creating user:", createErr);
+                return;
+              }
+
+              const newUserResponse = createRes.getUser();
+              setUser({
+                id: newUserResponse.getId(),
+                email: newUserResponse.getEmail(),
+                name: newUserResponse.getName(),
+                profile_pic: newUserResponse.getProfilePic(),
+              });
+              localStorage.setItem("userEmail", email);
+            });
+          } else {
+            console.error("Login error:", err);
+          }
+          return;
         }
-      }
+
+        const userResponse = response.getUser();
+        setUser({
+          id: userResponse.getId(),
+          email: userResponse.getEmail(),
+          name: userResponse.getName(),
+          profile_pic: userResponse.getProfilePic(),
+        });
+        localStorage.setItem("userEmail", email);
+      });
     } catch (error) {
       console.error("Error decoding Google JWT:", error);
     }
@@ -69,9 +113,9 @@ const TopBar = ({ user, setUser, setNotes }) => {
 
   // Logout Functionality
   const handleLogout = () => {
-    setUser(null); // Clear user state
+    setUser(null);
     setNotes([]);
-    localStorage.removeItem("userEmail"); // Remove email from local storage
+    localStorage.removeItem("userEmail");
     setAnchorEl(null);
   };
 
@@ -96,11 +140,10 @@ const TopBar = ({ user, setUser, setNotes }) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             {user ? (
               <>
-                {/* Show User Name */}
                 <Typography variant="body1" sx={{ color: "white", fontWeight: "bold" }}>
                   {user.name}
                 </Typography>
-                
+
                 <Tooltip title="User Settings">
                   <IconButton onClick={handleMenuClick} sx={{ p: 0 }}>
                     <Avatar alt={user.name} src={user.profile_pic} sx={{ width: 40, height: 40 }} />
