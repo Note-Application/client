@@ -16,7 +16,7 @@ import { GetUserByEmailRequest, CreateUserRequest } from "../generated/noteapp_p
 import { UserServiceClient } from "../generated/noteapp_grpc_web_pb";
 
 const CLIENT_ID = "437083640575-eqgncvtn6ham29h67rskg8ibaku1jva8.apps.googleusercontent.com";
-const GRPC_SERVER_URL = "http://localhost:9000"; // Envoy proxy for gRPC-web
+const GRPC_SERVER_URL = "http://envoy:9000"; // Envoy proxy for gRPC-web
 
 const usersClient = new UserServiceClient(GRPC_SERVER_URL); // gRPC client instance
 

@@ -21,7 +21,7 @@ import {
   CreateUserRequest,
 } from "./generated/noteapp_pb";
 
-const API_BASE_URL = "http://localhost:9000"; // gRPC-Web via Envoy
+const API_BASE_URL = "http://envoy:9000"; // gRPC-Web via Envoy
 
 const notesClient = new NoteServiceClient(API_BASE_URL);
 const usersClient = new UserServiceClient(API_BASE_URL);
