@@ -8,6 +8,7 @@ import axios from "axios";
 const CLIENT_ID = "437083640575-eqgncvtn6ham29h67rskg8ibaku1jva8.apps.googleusercontent.com"; // Replace with your actual Google Client ID
 const API_BASE_URL = "https://noteapp-wnzf.onrender.com"; // Backend API URL
 
+
 const TopBar = ({ user, setUser, setNotes }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
